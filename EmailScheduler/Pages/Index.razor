@@ -1,6 +1,7 @@
 ﻿@page "/"
-@inject EmailScheduler.Data.IEmailService EmailService
+@inject EmailScheduler.EmailServices.IEmailService EmailService
 
+@using EmailScheduler.Models
 @using Syncfusion.Blazor.Notifications
 @using Syncfusion.Blazor.Popups
 @using Syncfusion.Blazor.Schedule
@@ -143,25 +144,6 @@
     SfDialog DialogRef;
     SfToast ToastRef;
     SfSchedule<EventModel> ScheduleRef;
-    private class EventModel
-    {
-        public int Id { get; set; }
-        public string Subject { get; set; }
-        public string Location { get; set; }
-        public string Description { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        public string StartTimezone { get; set; }
-        public string EndTimezone { get; set; }
-        public bool? IsAllDay { get; set; }
-        public bool? IsBlock { get; set; }
-        public bool? IsReadonly { get; set; }
-        public int? RecurrenceID { get; set; }
-        public int? FollowingID { get; set; }
-        public string RecurrenceRule { get; set; }
-        public string RecurrenceException { get; set; }
-        public int? EmployeeId { get; set; }
-    }
 
     private class ResourceModel
     {
@@ -241,7 +223,6 @@
                 }
             }
             toEmail = toEmail.Distinct().ToList();
-            string HTMLBody = GenerateEmailContent(datas[0], args.ActionType);
             string Title = string.Empty;
             switch (args.ActionType)
             {
@@ -255,38 +236,10 @@
                     Title = "Scheduled Event Removed";
                     break;
             }
-            EmailResponse = await EmailService.SendEmailAsync(toEmail, Title, HTMLBody);
+            EmailResponse = await EmailService.SendEmailAsync(toEmail, Title, datas[0]);
             ShowCloseIcon = true;
             StateHasChanged();
         }
-    }
-
-    private string GenerateEmailContent(EventModel data, ActionType actionType)
-    {
-        string HTMLBody = EmailService.GetEmailContent();
-
-        string Title = string.Empty;
-        switch (actionType)
-        {
-            case ActionType.EventCreate:
-                Title = "New Event Scheduled";
-                break;
-            case ActionType.EventChange:
-                Title = "Scheduled Event Updated";
-                break;
-            case ActionType.EventRemove:
-                Title = "Scheduled Event Removed";
-                break;
-        }
-
-        HTMLBody = HTMLBody.Replace("###EVENTTYPE###", Title);
-        HTMLBody = HTMLBody.Replace("###SUBJECT###", data.Subject ?? "(No Title)");
-        HTMLBody = HTMLBody.Replace("###STARTTIME###", data.StartTime.ToString());
-        HTMLBody = HTMLBody.Replace("###ENDTIME###", data.EndTime.ToString());
-        HTMLBody = HTMLBody.Replace("###LOCATION###", data.Location ?? "NA");
-        HTMLBody = HTMLBody.Replace("###DESCRIPTION###", data.Description ?? "NA");
-
-        return HTMLBody;
     }
 
 }
