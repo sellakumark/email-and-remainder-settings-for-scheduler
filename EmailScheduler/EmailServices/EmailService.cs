@@ -1,8 +1,8 @@
 ﻿using EmailScheduler.Models;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
@@ -70,75 +70,23 @@ namespace EmailScheduler.EmailServices
 
         private string GetEmailContent(string Title, EventModel Data)
         {
-            string HTMLBody = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\r\n" +
-                "<html lang=\"en\" xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">\r\n\r\n" +
-                "<head>\r\n" +
-                "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=us-ascii\" />\r\n" +
-                "<title>Emailing for Syncfusion Scheduler</title>\r\n" +
-                "</head>\r\n\r\n" +
-                "<body>\r\n" +
-                "<table id=\"main-panel\" align=\"center\" width=\"750\" cellspacing=\"0\" cellpadding=\"0\" style=\"border: 1px solid #cccccc; color: #ffffff; margin-top: 10px;\">\r\n" +
-                "<thead>\r\n" +
-                "<tr height=\"75\">\r\n" +
-                "<td class=\"##Notification##\" bgcolor=\"#6264a7\" style=\"padding: 0 30px;\">\r\n" +
-                "<table cellspacing=\"0\" cellpadding=\"0\" width=\"100%\">\r\n" +
-                "<tbody>\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"padding:0;\">\r\n<b style=\"font-size: 20px;color: #ffffff;\">" + Title + "</b>\r\n</td>\r\n" +
-                "</tr>\r\n" +
-                "</tbody>\r\n" +
-                "</table>\r\n" +
-                "</td>\r\n" +
-                "</tr>\r\n" +
-                "</thead>\r\n" +
-                "<tbody class=\"event-content\" style=\"background-color: #efefef80; color: #000000;\">\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"padding: 0 30px;\">\r\n<div style=\"margin-top: 20px;\">Hi,</div>\r\n</td>\r\n" +
-                "</tr>\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"padding: 0 30px;\">\r\n<div style=\"margin-top: 15px;\">\r\nThe event has been scheduled to you and details has been listed below,\r\n</div>\r\n</td>\r\n" +
-                "</tr>\r\n" +
-                "<tr>\r\n<td style=\"height: 20px;\">&nbsp;</td>\r\n</tr>\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"padding: 0 30px;\">\r\n" +
-                "<table class=\"event-details\" cellspacing=\"0\" cellpadding=\"0\" width=\"100%\" style=\"border: 1px solid #ffffff;\">\r\n" +
-                "<tbody>\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\"><b>Subject</b></td>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\">" + Data.Subject ?? "(No Title)" + "</td>\r\n" +
-                "</tr>\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\"><b>Start Time</b></td>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\">" + Data.StartTime.ToString() + "</td>\r\n" +
-                "</tr>\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\"><b>End Time</b></td>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\">" + Data.EndTime.ToString() + "</td>\r\n" +
-                "</tr>\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\"><b>Location</b></td>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\">" + Data.Location ?? "NA" + "</td>\r\n" +
-                "</tr>\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\"><b>Description</b></td>\r\n" +
-                "<td style=\"background-color: #efefef; border: 2px solid #ffffff; border-collapse: collapse; padding: 10px; vertical-align: top;\">" + Data.Description ?? "NA" + "</td>\r\n" +
-                "</tr>\r\n" +
-                "</tbody>\r\n" +
-                "</table>\r\n" +
-                "</td>\r\n" +
-                "</tr>\r\n" +
-                "<tr>\r\n" +
-                "<td style=\"height: 20px;\">&nbsp;</td>\r\n" +
-                "</tr>\r\n" +
-                "</tbody>\r\n" +
-                "<tfoot>\r\n" +
-                "<tr class=\"##Notification##\" bgcolor=\"#6264a7\" height=\"40\" style=\"color: white;\">\r\n" +
-                "<td style=\"padding: 0 30px;\">Copyright © " + DateTime.Now.Year.ToString() + " Syncfusion Scheduler</td>\r\n" +
-                "</tr>\r\n" +
-                "</tfoot>\r\n" +
-                "</table>\r\n" +
-                "</body>\r\n\r\n" +
-                "</html>";
+            string HTMLBody = string.Empty;
+
+            using (FileStream fs = File.Open(Directory.GetCurrentDirectory() + "/Email_Template.html", FileMode.Open, FileAccess.ReadWrite))
+            {
+                using (StreamReader sr = new StreamReader(fs))
+                {
+                    HTMLBody = sr.ReadToEnd();
+                }
+            }
+
+            HTMLBody = HTMLBody.Replace("###EMAILTITLE###", Title);
+            HTMLBody = HTMLBody.Replace("###EVENTSUBJECT###", Data.Subject ?? "(No Title)");
+            HTMLBody = HTMLBody.Replace("###EVENTSTART###", Data.StartTime.ToString());
+            HTMLBody = HTMLBody.Replace("###EVENTEND###", Data.EndTime.ToString());
+            HTMLBody = HTMLBody.Replace("###EVENTLOCATION###", Data.Location ?? "NA");
+            HTMLBody = HTMLBody.Replace("###EVENTDETAILS###", Data.Description ?? "NA");
+
             return HTMLBody;
         }
 
